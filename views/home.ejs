@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.css" rel="stylesheet" />
+    <link
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.8.0/fonts/remixicon.css"
+    rel="stylesheet"
+    />
+  </head>
+  <body>
+  <main class="p-4 bg-gray-100 dark:bg-gray-800 h-screen">
+
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick="showPopUp()">
+        Upload File
+    </button>
+
+        <div class="pop backdrop-blur hidden fixed top-0 left-0 h-screen w-screen flex items-center justify-center">
+            <form action="/upload-file" method="post" enctype="multipart/form-data">        
+                <div class="flex items-center justify-center">
+                    <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-64 bg-gray-700 border border-dashed border-default-strong rounded-base cursor-pointer hover:bg-gray-800">
+                        <div class="flex flex-col items-center justify-center text-white pt-5 pb-6 w-96">
+                            <svg class="w-8 h-8 mb-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h3a3 3 0 0 0 0-6h-.025a5.56 5.56 0 0 0 .025-.5A5.5 5.5 0 0 0 7.207 9.021C7.137 9.017 7.071 9 7 9a4 4 0 1 0 0 8h2.167M12 19v-9m0 0-2 2m2-2 2 2"/></svg>
+                            <p class="mb-2 text-sm"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p class="text-xs">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+                        </div>
+                        <input id="dropzone-file" type="file" class="hidden" name="file"/>
+                    </label>
+                </div>
+
+                <button class="bg-gray-600 hover:bg-gray-900 text-white text-bold py-2 px-4 mt-4 rounded">
+                    Upload File
+                </button>
+
+            </form>
+            
+            <button onClick="hidePopUp()" class="absolute top-4 right-4 text-gray-500 dark:text-gray-400 text-xl">
+                <i class="ri-close-circle-fill"></i>
+            </button>
+
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+    <script>
+        function showPopUp(){
+            document.querySelector('.pop').style.display = 'flex';
+        }
+        function hidePopUp(){
+            document.querySelector('.pop').style.display = 'none';
+        }
+    </script>
+  </body>
+</html>
