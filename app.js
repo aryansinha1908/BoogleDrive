@@ -1,15 +1,15 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const userRouter = require('./routes/user.routes');
 const indexRouter = require('./routes/index.routes');
 const fileRouter = require('./routes/file.routes');
-const dotenv = require('dotenv');
 const connectToDB = require('./config/db');
 const cookieParser = require('cookie-parser');
 const path = require("path");
 const fs = require('fs');
 const app = express();
-
-dotenv.config();
 
 connectToDB();
 

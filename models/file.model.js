@@ -5,7 +5,6 @@ const fileSchema = new mongoose.Schema({
     storedName: String,
     mimeType: String,
     size: Number,
-    path: String,
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -14,7 +13,15 @@ const fileSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    publicUrl: {
+        type: String,
+        required: true,
+    },
+    storagePath: {
+        type: String,
+        required: true,
+    },
 });
 
 module.exports = mongoose.model("file", fileSchema);

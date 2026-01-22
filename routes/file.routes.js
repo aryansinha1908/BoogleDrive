@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
-const upload = require("../middlewares/upload.middleware");
+const supabase = require("../config/supabase");
 const File = require("../models/file.model");
 const auth = require("../middlewares/auth.middleware");
+const upload = require("../middlewares/upload.middleware");
 
+/* <---- For local Storage Start ----> */
+
+/*
 router.post(
     "/upload",
     auth,
@@ -27,39 +31,70 @@ router.post(
         }
     }
 );
+*/
+
+/* <---- For local Storage End ----> */
+
+/* <---- Supabase Upload Route Start ----> */
+
+router.post("/upload", auth, upload.single("file"), async (req, res) => {
+    try {
+        const file = req.file;
+
+        if (!file){
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const fileExt = file.originalname.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString().substring(2)}.${fileExt}`;
+
+        const { data, error } = await supabase.storage.from(process.env.SUPABASE_BUCKET).upload(fileName, file.buffer, {
+            contentType: file.mimetype,
+        });
+
+        if (error) {
+            console.error(error);
+            return res.status(500).json({ error: "Upload to Supabase failed" });
+        }
+
+        const { data: publicData } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(fileName);
+
+        const savedFile = await File.create({
+            owner: req.user.userId,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            storagePath: fileName,
+            publicUrl: publicData.publicUrl
+        });
+
+        res.json({
+            message: "File Uploaded Successfully",
+            fileId: savedFile._id,
+            url: publicData.publicUrl,
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server Error" });
+    }
+});
+
+/* <---- Supabase Upload Route End ----> */
+
+/* <---- Download Route Starts ----> */
 
 router.get("/download/:id", auth, async (req, res) => {
-    try {
-        const file = await File.findById(req.params.id);
-        // console.log(file);
+    const file = await File.findById(req.params.id);
 
-        if(!file) return res.status(404).send("File not found");
-        
-        if (file.owner.toString() !== req.user.userId)
-           return res.status(403).send("Unauthorized");
+    if (!file) return res.status(404).send("File not found");
+    if (file.owner.toString() !== req.user.userId)
+        return res.status(403).send("Unauthorized");
 
-        if (!fs.existsSync(file.path)) {
-            return res.status(404).send("File missing on server");
-        }
-        res.setHeader(
-            "Content-Disposition",
-            `attachment; filename="${file.originalName}"`
-        );
-        res.setHeader("Content-Type", file.mimeType);
-
-        const stream = fs.createReadStream(file.path);
-
-        stream.on("error", err => {
-            console.error(err);
-            res.status(500).end();
-        });
-        
-        stream.pipe(res);
-    } catch (err){
-        res.status(500).send("Download failed");
-    }
-
+    return res.redirect(file.publicUrl);
 });
+
+/* <---- Download Route End ----> */
 
 router.get("/my-files", auth, async (req, res) => {
     const files = await File.find({ owner: req.user.userId });
