@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
 const supabase = require("../config/supabase");
 const File = require("../models/file.model");
 const auth = require("../middlewares/auth.middleware");
@@ -91,7 +90,10 @@ router.get("/download/:id", auth, async (req, res) => {
     if (file.owner.toString() !== req.user.userId)
         return res.status(403).send("Unauthorized");
 
-    return res.redirect(file.publicUrl);
+    // return res.redirect(file.publicUrl);
+
+    const { data } = await supabase.storage.from("files").createSignedUrl(file.storagePath, 60);
+    res.redirect(data.signedUrl);
 });
 
 /* <---- Download Route End ----> */
@@ -99,6 +101,21 @@ router.get("/download/:id", auth, async (req, res) => {
 router.get("/my-files", auth, async (req, res) => {
     const files = await File.find({ owner: req.user.userId });
     res.json(files);
+})
+
+router.delete("/delete/:id", auth, async (req, res) => {
+    const file = await File.findById(req.params.id);
+    
+    if (!file){
+        return res.status(404).send("Not Found");
+    }
+    if (file.owner.toString() !== req.user.userId){
+        return res.status(403).send("Unauthorized");
+    }
+
+    await supabase.storage.from("files").remove([file.storagePath]);
+    await file.deleteOne();
+    res.send("Deleted");
 })
 
 module.exports = router;

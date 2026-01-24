@@ -1,6 +1,6 @@
 # BoogleDrive (File Storage Backend Project)
-A backend focused project for uploading, downloading and storing files,
-built using **Node.js**, **Express**, **MongoDB** and **JWT Authentication**.
+A backend-focused project for uploading, downloading, and storing files.
+Built using **Node.js**, **Express**, **MongoDB** and **JWT Authentication**.
 
 ## Features
 - User authentication using JWT (cookies)
@@ -23,9 +23,14 @@ built using **Node.js**, **Express**, **MongoDB** and **JWT Authentication**.
 Create a `.env` file in the root directory of the project.
 ```env
 PORT=3000
+NODE_ENV=development
 MONGO_URI=mongodb://127.0.0.1:27017/boogledrive
 JWT_SECRET=your_jwt_secret
-UPLOAD_BASE_PATH=uploads
+
+SUPABASE_URL=your_project_url
+SUPABASE_SERVICE_KEY=your_service_key
+
+SUPABASE_BUCKET=uploads
 ```
 
 ## Installation and Setup
@@ -55,23 +60,12 @@ npm start
 Server will run on:
 `http://localhost:3000`
 
-
-### Authentication
-
-1. User logs in using `/user/login`
-2. Server:
-    - Verifies credentials
-    - Generates JWT
-    - Stores JWT in an HTTP cookie
-3. Protected routes use auth.middleware.js
-4. JWT is verified on every protected request
-
 ### Authorization Rules
-|Situation|Status Code|
-|---------|-----------|
-|Not logged in|`401 Unauthorized`|
-|File not found|`404 Not Found`|
-|Accessing someone else's file|`403 Forbidden`|
+| Situation                     | Status Code        |
+| ----------------------------- | ------------------ |
+| Not logged in                 | `401 Unauthorized` |
+| File not found                | `404 Not Found`    |
+| Accessing someone else's file | `403 Forbidden`    |
 
 ### Testing the API with Postman
 
@@ -111,7 +105,16 @@ On successful login:
 - Response: Logged in
 - A cookie named `token` is set automatically
 
-### 3. Upload a File (Protected Route)
+### 3. Logout
+
+**Method:** `POST`
+
+**URL:** `http://localhost:3000/user/logout`
+
+On successful logout:
+- Response: Logged out
+- Token will be removed from cookies
+### 4. Upload a File
 
 **Method:** `POST`
 
@@ -126,15 +129,57 @@ On successful login:
     - Type: `File`
     - Value: Select any file from local machine
 
-### 4. Download a File by ID (Protected Route)
+Without errors,
+- File is stored in supabase storage
+- File's metadata is stored in MongoDB
+
+### 5. Download a File by ID
 
 **Method:** `GET`
 
 **URL:** `http://localhost:3000/files/download/<fileId>`
 
 If authorized:
+- A supabase signed url will be generated with time limit of 60 minutes
 - The file will be downloaded directly
 - Only the Owner of the file can download it.
 
+### 6. Delete a File by ID
+
+**Method:** `DELETE`
+
+**URL:** `http://localhost:3000/files/delete/<fileId>`
+
+If file exists and the user is authorized:
+- Response: Deleted
+- The file is removed from the supabase storage
+- The file's metadata is deleted from MongoDB
+
+### 7. View Files
+
+**Method:** `GET`
+
+**URL:** `http://localhost:3000/files/my-files`
+
+All the files uploaded by the user will be sent in json format.
+### Security and Authentication 
+
+This project uses **JWT** based authentication stored in HTTP-only cookies.
+##### How Authentication works
+
+1. A registered user logs in using username and password.
+2. Backend verifies credentials using bcrypt.
+3. Backend generates a JWT token containing:
+	- userId
+	- email
+	- username
+4. JWT is stored in an HTTP-only cookie.
+5. Protected routes use a middleware to verify the JWT.
+
+#### Token & Cookie Expiry
+
+To prevent tokens from being valid forever, both the JWT and cookie are configured to expire.
+1. The token created using JWT expires in 7 days.
+2. The cookie is deleted in 7 days.
 ##### Author
 **Aryan Sinha (aryansinha1908)**
