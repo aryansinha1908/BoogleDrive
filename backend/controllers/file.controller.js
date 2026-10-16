@@ -1,42 +1,7 @@
-const express = require('express');
-const router = express.Router();
-const supabase = require("../config/supabase");
 const File = require("../models/file.model");
-const auth = require("../middlewares/auth.middleware");
-const upload = require("../middlewares/upload.middleware");
+const supabase = require("../config/supabase");
 
-/* <---- For local Storage Start ----> */
-
-/*
-router.post(
-    "/upload",
-    auth,
-    upload.single("file"),
-    async (req, res) => {
-        try{
-            const file = new File({
-                originalName: req.file.originalname,
-                storedName: req.file.filename,
-                mimeType: req.file.mimetype,
-                size: req.file.size,
-                path: req.file.path,
-                owner: req.user.userId
-            });
-            await file.save();
-
-            res.json({ success: true, file });
-        } catch (err){
-            res.status(500).json({ error: "Upload failed" });
-        }
-    }
-);
-*/
-
-/* <---- For local Storage End ----> */
-
-/* <---- Supabase Upload Route Start ----> */
-
-router.post("/upload", auth, upload.single("file"), async (req, res) => {
+const uploadFile = async (req, res) => {
     try {
         const file = req.file;
 
@@ -77,13 +42,9 @@ router.post("/upload", auth, upload.single("file"), async (req, res) => {
         console.error(err);
         res.status(500).json({ error: "Internal server Error" });
     }
-});
+};
 
-/* <---- Supabase Upload Route End ----> */
-
-/* <---- Download Route Starts ----> */
-
-router.get("/download/:id", auth, async (req, res) => {
+const downloadFile = async (req, res) => {
     const file = await File.findById(req.params.id);
 
     if (!file) return res.status(404).send("File not found");
@@ -94,16 +55,9 @@ router.get("/download/:id", auth, async (req, res) => {
 
     const { data } = await supabase.storage.from("files").createSignedUrl(file.storagePath, 60);
     res.redirect(data.signedUrl);
-});
+}
 
-/* <---- Download Route End ----> */
-
-router.get("/my-files", auth, async (req, res) => {
-    const files = await File.find({ owner: req.user.userId });
-    res.json(files);
-})
-
-router.delete("/delete/:id", auth, async (req, res) => {
+const deleteFile = async (req, res) => {
     const file = await File.findById(req.params.id);
     
     if (!file){
@@ -116,6 +70,6 @@ router.delete("/delete/:id", auth, async (req, res) => {
     await supabase.storage.from("files").remove([file.storagePath]);
     await file.deleteOne();
     res.send("Deleted");
-})
+}
 
-module.exports = router;
+module.exports({ uploadFile, downloadFile, deleteFile });
